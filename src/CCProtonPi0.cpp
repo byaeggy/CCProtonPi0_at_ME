@@ -158,6 +158,13 @@ CCProtonPi0::CCProtonPi0(const std::string& type, const std::string& name, const
     declareProperty("HypothesisMethods", m_hypMeths);
     info() << " CCProtonPi0 Hypothesis added " << endmsg;
 
+
+    // semantic segmentation hack - Jon
+    declareProperty("MLPredFile", m_getMLPredFilename = "MLPredFile.root" );
+    declareProperty("UseMLPred", m_useMLPred = false );
+
+
+
 }
 
 //==============================================================================
@@ -189,6 +196,15 @@ StatusCode CCProtonPi0::initialize()
     m_recoHexApothem  = 1000.0*CLHEP::mm; 
     m_recoUpStreamZ   = 5810.0*CLHEP::mm;
     m_recoDownStreamZ = 8600.0*CLHEP::mm;
+
+
+    if( m_useMLPred ){
+      filename   = m_getMLPredFilename;
+      debug() << "ML Prediction file: " << filename << endmsg;
+      debug() << "m_useDNN = " << m_useMLPred << endmsg;
+      DBPredFile = new TFile(filename.c_str());
+      dbPred     = (TTree*)DBPredFile->Get("tout");
+    }
 
     //--------------------------------------------------------------------------
     // Initialize Analysis Tools and Services
@@ -1421,6 +1437,45 @@ StatusCode CCProtonPi0::reconstructEvent( Minerva::PhysicsEvent *event, Minerva:
     }
 
     debug() << "FINISH: Muon Reconstruction" << endmsg;
+
+    // semantic segmentation hack - Jon
+    if (  m_useMLPred ){
+      std::string Cuts;
+      // I need to see where run/subrun/etc is defined here
+      //if( truth ) Cuts = Form("run==%d && subrun==%d && gate==%d && slice_number==%d", genMinHeader->RunNumber(), genMinHeader->SubRunNumber(),truth->NumEventInFile(), event->sliceNumbers()[0]);
+      //else Cuts = Form("run==%d && subrun==%d && gate==%d && slice_number==%d", header->runNumber(), header->subRunNumber(),header->gateNumber(), event->sliceNumbers()[0]);
+      Cuts = Form(""); // test hack - Jon
+      debug() << "ML Cuts = " << Cuts << endmsg;
+      //Int_t n = dbPred->Draw("predvec",Cuts.c_str(),"");
+      Int_t n = dbPred->Draw("predvec",Cuts.c_str(),"",1,0); // test hack - Jon
+      debug() << "ML The arrays' dimension is " << n << endmsg;
+
+      if( n == 36576 ){
+
+	double* avec = dbPred->GetVal(0);  
+
+	for (int i = 0; i<127; i++){
+	  for (int j=0; j<96; j++){
+
+	    ssmap[std::make_tuple(i,j)]=avec[i+127*j];
+	    debug() << "ML element  " << i << " " << j <<" is "<< avec[i+127*j] << endmsg;
+   
+
+	  }
+	}
+	
+
+
+	//DNN_segment  = (int)*dbPred->GetVal(0);
+	//DNN_plane_probs = *dbPred->GetVal(1);
+	// Retrieve variables 1 and 2                                                                                                                                                                                                                                       
+
+   
+	
+      }
+    }
+
+
 
     //==========================================================================
     // Michel Electrons
