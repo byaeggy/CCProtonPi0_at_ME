@@ -22,6 +22,12 @@ Use Tools/ProductionScripts/ana_scripts/ProcessAna.py
 Author:         Ozgur Altinok  - ozgur.altinok@tufts.edu
 ================================================================================
 */
+
+
+
+
+
+
 #ifndef CCPROTONPI0_H 
 #define CCPROTONPI0_H 1
 
@@ -218,6 +224,9 @@ namespace Minerva {
     class DeOuterDetector;
 }
 
+
+
+
 //! This class is for Reconstruct Pi0 using muon match vertex
 class CCProtonPi0 : public MinervaAnalysisTool
 {
@@ -340,8 +349,11 @@ private:
     std::string m_getMLPredFilename;
     std::string filename;
     TFile *DBPredFile;
-    TTree *dbPred;
-    mutable std::unordered_map<std::tuple<int,int>,double> ssmap;
+    TTree *dbPredX;
+    TTree *dbPredU;
+    TTree *dbPredV;
+    //mutable std::unordered_map<std::tuple<unsigned int,unsigned int>,double> ssmap;
+    mutable std::map<std::pair<unsigned int,unsigned int>,double> ssmap;
 
     // VertexBlob
     double m_vertex_blob_radius;
@@ -574,7 +586,52 @@ bool Save_4ShowerInfo( std::vector<Minerva::IDBlob*> &foundBlobs, Minerva::Physi
     void SaveSCALHits(Minerva::PhysicsEvent *event, Minerva::IDBlob* blob, int blobID) const;
     void SaveSCALHits_Improved(Minerva::PhysicsEvent *event, Minerva::IDBlob* blob, int blobID) const;
     void SaveSCAL_minZ_Info(Minerva::PhysicsEvent *event, Minerva::IDBlob* blob, int blobID) const;
+
+
+    double calc_em_fraction(const SmartRef<Minerva::IDDigit>& digit) const
+    {
+      // use your ML output here to decide if the digit is EM like
+      
+      return 0.5;
+      
+    }
+
+
+    
+    // return true of energy weighted EM fraction above some threshold
+    // energy weighted EM fraction:
+    // \sum f_i * e_i / \sum e_i
+    // where f_i and e_i are EM fraction and energy of the digit. The sum
+    // is over all digits in this cluster
+    bool is_em(const SmartRef<Minerva::IDCluster>& cluster) const
+    {
+      const SmartRefVector<Minerva::IDDigit>& digits = cluster->digits();
+      
+      double total_energy = 0.0;
+      double weighted_em_fraction = 0.0;
+      for (SmartRefVector<Minerva::IDDigit>::const_iterator d = digits.begin();
+	   d != digits.end(); ++d) {
+	double energy = (*d)->normEnergy();
+	double em_fraction = calc_em_fraction(*d);
+	
+	weighted_em_fraction = energy * em_fraction;
+	total_energy += energy;
+      }
+      
+      weighted_em_fraction /= total_energy;
+
+      double some_threshold = 0.5; // threshold to be consider EM like
+    
+      return weighted_em_fraction > some_threshold;
+    
+    }
+
+
+
+
 };
+
+
 
 #endif // CCPROTONPI0_H 
 

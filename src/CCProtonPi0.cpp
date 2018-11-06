@@ -203,7 +203,9 @@ StatusCode CCProtonPi0::initialize()
       debug() << "ML Prediction file: " << filename << endmsg;
       debug() << "m_useDNN = " << m_useMLPred << endmsg;
       DBPredFile = new TFile(filename.c_str());
-      dbPred     = (TTree*)DBPredFile->Get("tout");
+      dbPredX     = (TTree*)DBPredFile->Get("tout");
+      dbPredU     = (TTree*)DBPredFile->Get("tout");
+      dbPredV     = (TTree*)DBPredFile->Get("tout");
     }
 
     //--------------------------------------------------------------------------
@@ -1466,6 +1468,8 @@ StatusCode CCProtonPi0::reconstructEvent( Minerva::PhysicsEvent *event, Minerva:
     if ( true ){
       info() << "Filling branches for Lattice Energies" << endmsg;
 
+      ssmap.clear();
+
       m_MLVFTool->getLatticeValues(event,
                                    latticeEnergyIndices,
                                    latticeNormEnergySums);
@@ -1491,24 +1495,30 @@ StatusCode CCProtonPi0::reconstructEvent( Minerva::PhysicsEvent *event, Minerva:
       Cuts = Form(""); // test hack - Jon
       debug() << "ML Cuts = " << Cuts << endmsg;
       //Int_t n = dbPred->Draw("predvec",Cuts.c_str(),"");
-      Int_t n = dbPred->Draw("predvec",Cuts.c_str(),"",1,0); // test hack - Jon
+      Int_t n = dbPredX->Draw("predvec",Cuts.c_str(),"",1,0); // test hack - Jon
       debug() << "ML The arrays' dimension is " << n << endmsg;
 
       if( n == 36576 ){
 
-	//std::vector<double> avec = dbPred->GetVal(0);
-	double* avec = dbPred->GetVal(0);  
+	
 
+	//std::vector<double> avec = dbPred->GetVal(0);
+	double* avec = dbPredX->GetVal(0);  
+
+	for(std::vector<std::pair<unsigned int, unsigned int>>::size_type i = 0; i != modstripX.size(); i++) {
+	  ssmap[modstripX[i]]=avec[i];
+	  debug() << "ML element  " << i <<" is "<< avec[i] << endmsg;
+	}
+
+	      /*
 	for (int i = 0; i<127; i++){
 	  for (int j=0; j<96; j++){
 
-	    ssmap[std::make_tuple(i,j)]=avec[i+127*j];
 	    debug() << "ML element  " << i << " " << j <<" is "<< avec[i+127*j] << endmsg;
-   
 
 	  }
 	}
-	
+	      */
 
 
 	//DNN_segment  = (int)*dbPred->GetVal(0);
@@ -1634,6 +1644,7 @@ StatusCode CCProtonPi0::reconstructEvent( Minerva::PhysicsEvent *event, Minerva:
     beforeConeBlobs = event->select<Minerva::IDCluster>("Unused","!LowActivity&!XTalkCandidate");
 
     debug()<<"N(Unused) Before ConeBlobs = "<<beforeConeBlobs.size()<<endmsg; 
+
 
 
     // MAKE CUT - If ConeBlobs Can NOT Find Two Blobs
@@ -4430,6 +4441,7 @@ bool CCProtonPi0::ConeBlobs(Minerva::PhysicsEvent *event, Minerva::GenMinInterac
     SmartRefVector<Minerva::IDCluster> usableClusters;
     FillUsableClusters(usableClusters, event, truthEvent);
 
+
     //--------------------------------------------------------------------------
     // Analyze usableClusters using AngleScan Class
     //--------------------------------------------------------------------------
@@ -7076,6 +7088,14 @@ void CCProtonPi0::FillUsableClusters(SmartRefVector<Minerva::IDCluster> &usableC
             continue; 
         }
        
+	bool isCluster_notEM = is_em(*it_clus);
+        if (isCluster_notEM){
+            debug()<<"Rejecting Cluster: not EM!"<<endmsg;
+            rejectedClusters.push_back(*it_clus);
+            continue; 
+        }
+
+
         if ( (*it_clus)->subdet() ==  Minerva::IDCluster::Tracker ) energyTracker += (*it_clus)->energy();
         if ( (*it_clus)->subdet() ==  Minerva::IDCluster::ECAL )    energyECAL += (*it_clus)->energy();
         if ( (*it_clus)->subdet() ==  Minerva::IDCluster::HCAL )    energyHCAL += (*it_clus)->energy();
