@@ -245,6 +245,16 @@ StatusCode CCProtonPi0::initialize()
         error()<<"Could not obtained all Tools and Services!"<<endmsg;
         return StatusCode::FAILURE;
     }
+    
+    if ( true ){
+      try{
+        m_MLVFTool = tool<IMLVFTool>("MLVFTool", m_MLVFToolAlias);
+        debug() << " Got MLVF Sample Prep Tool named: " << m_MLVFTool->name() << endmsg;
+      } catch(GaudiException& e){
+	error() << "Could not obtained MLVFTool: " << m_MLVFToolAlias << endmsg;
+        return StatusCode::FAILURE;
+      }
+    }
 
     service("GeomUtilSvc", m_GeomUtilSvc, true);
     m_idDet = m_GeomUtilSvc->getIDDet();
@@ -1438,6 +1448,40 @@ StatusCode CCProtonPi0::reconstructEvent( Minerva::PhysicsEvent *event, Minerva:
 
     debug() << "FINISH: Muon Reconstruction" << endmsg;
 
+
+    // Try to Implement MLVFTool                                                                                                                      
+    //---------------------------------                                                                                                               
+    std::vector<int> latticeEnergyIndices;
+    std::vector<double> latticeNormEnergySums;
+    std::vector<double> latticeRelativeTimes;
+
+
+    std::vector<std::pair<unsigned int, unsigned int>> modstripX;
+    std::vector<std::pair<unsigned int, unsigned int>> modstripU;
+    std::vector<std::pair<unsigned int, unsigned int>> modstripV;
+
+
+                                                                                                                                                      
+
+    if ( true ){
+      info() << "Filling branches for Lattice Energies" << endmsg;
+
+      m_MLVFTool->getLatticeValues(event,
+                                   latticeEnergyIndices,
+                                   latticeNormEnergySums);
+
+
+      m_MLVFTool->getModStripFromLattice(latticeEnergyIndices,
+					 modstripX,
+					 modstripU,
+					 modstripV);
+      
+    }
+    
+
+                                                           
+
+
     // semantic segmentation hack - Jon
     if (  m_useMLPred ){
       std::string Cuts;
@@ -1452,6 +1496,7 @@ StatusCode CCProtonPi0::reconstructEvent( Minerva::PhysicsEvent *event, Minerva:
 
       if( n == 36576 ){
 
+	//std::vector<double> avec = dbPred->GetVal(0);
 	double* avec = dbPred->GetVal(0);  
 
 	for (int i = 0; i<127; i++){

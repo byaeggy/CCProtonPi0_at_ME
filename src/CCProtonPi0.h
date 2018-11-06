@@ -210,6 +210,7 @@ class IRecoObjectTimeTool;
 class IVertexEnergyStudyTool;
 class IVertexFitter;
 class TRandom3;
+class IMLVFTool;
 class IRecoObjectTimeTool;
 
 namespace Minerva {
@@ -404,6 +405,10 @@ private:
     IRecoObjectTimeTool* m_recoTimeTool;
     IVertexEnergyStudyTool* m_vertexEnergyStudyTool;
     IVertexFitter* m_vertexFitter;
+
+
+    IMLVFTool* m_MLVFTool;
+    std::string m_MLVFToolAlias;
 
 IRecoObjectTimeTool* m_timeTool;
 	std::string m_timeToolAlias;
