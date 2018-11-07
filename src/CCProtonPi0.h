@@ -353,7 +353,9 @@ private:
     TTree *dbPredU;
     TTree *dbPredV;
     //mutable std::unordered_map<std::tuple<unsigned int,unsigned int>,double> ssmap;
-    mutable std::map<std::pair<unsigned int,unsigned int>,double> ssmap;
+    mutable std::map<std::pair<unsigned int,unsigned int>,double> ssmapX;
+    mutable std::map<std::pair<unsigned int,unsigned int>,double> ssmapU;
+    mutable std::map<std::pair<unsigned int,unsigned int>,double> ssmapV;
 
     // VertexBlob
     double m_vertex_blob_radius;
@@ -591,8 +593,24 @@ bool Save_4ShowerInfo( std::vector<Minerva::IDBlob*> &foundBlobs, Minerva::Physi
     double calc_em_fraction(const SmartRef<Minerva::IDDigit>& digit) const
     {
       // use your ML output here to decide if the digit is EM like
-      
-      return 0.5;
+
+      double em_fraction=0.5;
+
+      const Minerva::DePlane* plane = m_idDet->getDePlane((digit)->stripid());
+
+      int mod_num = (digit)->module();
+      unsigned int dig_plane = (digit)->plane();
+      unsigned int dig_strip = (digit)->strip();
+      //Minerva::DePlane::View_t dig_view = plane->getView();                                                                                                                                                                                                          
+      unsigned int dig_view = (unsigned int)(plane->getView());
+
+      std::pair<unsigned int, unsigned int> dloc= std::make_pair(dig_plane,mod_num);      
+
+      if (dig_view==0) em_fraction=ssmapX[dloc];
+      if (dig_view==1) em_fraction=ssmapU[dloc];
+      if (dig_view==2) em_fraction=ssmapV[dloc];
+
+      return em_fraction;
       
     }
 

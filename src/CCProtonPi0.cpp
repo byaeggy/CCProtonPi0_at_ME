@@ -203,9 +203,9 @@ StatusCode CCProtonPi0::initialize()
       debug() << "ML Prediction file: " << filename << endmsg;
       debug() << "m_useDNN = " << m_useMLPred << endmsg;
       DBPredFile = new TFile(filename.c_str());
-      dbPredX     = (TTree*)DBPredFile->Get("tout");
-      dbPredU     = (TTree*)DBPredFile->Get("tout");
-      dbPredV     = (TTree*)DBPredFile->Get("tout");
+      dbPredX     = (TTree*)DBPredFile->Get("toutX");
+      dbPredU     = (TTree*)DBPredFile->Get("toutU");
+      dbPredV     = (TTree*)DBPredFile->Get("toutV");
     }
 
     //--------------------------------------------------------------------------
@@ -1468,7 +1468,9 @@ StatusCode CCProtonPi0::reconstructEvent( Minerva::PhysicsEvent *event, Minerva:
     if ( true ){
       info() << "Filling branches for Lattice Energies" << endmsg;
 
-      ssmap.clear();
+      ssmapX.clear();
+      ssmapU.clear();
+      ssmapV.clear();
 
       m_MLVFTool->getLatticeValues(event,
                                    latticeEnergyIndices,
@@ -1496,9 +1498,13 @@ StatusCode CCProtonPi0::reconstructEvent( Minerva::PhysicsEvent *event, Minerva:
       debug() << "ML Cuts = " << Cuts << endmsg;
       //Int_t n = dbPred->Draw("predvec",Cuts.c_str(),"");
       Int_t n = dbPredX->Draw("predvec",Cuts.c_str(),"",1,0); // test hack - Jon
-      debug() << "ML The arrays' dimension is " << n << endmsg;
+      debug() << "ML X The arrays' dimension is " << n << endmsg;
+      n = dbPredU->Draw("predvec",Cuts.c_str(),"",1,0); // test hack - Jon
+      debug() << "ML U The arrays' dimension is " << n << endmsg;
+      n = dbPredV->Draw("predvec",Cuts.c_str(),"",1,0); // test hack - Jon
+      debug() << "ML V The arrays' dimension is " << n << endmsg;
 
-      if( n == 36576 ){
+      if( true ){
 
 	
 
@@ -1506,7 +1512,21 @@ StatusCode CCProtonPi0::reconstructEvent( Minerva::PhysicsEvent *event, Minerva:
 	double* avec = dbPredX->GetVal(0);  
 
 	for(std::vector<std::pair<unsigned int, unsigned int>>::size_type i = 0; i != modstripX.size(); i++) {
-	  ssmap[modstripX[i]]=avec[i];
+	  ssmapX[modstripX[i]]=avec[i];
+	  debug() << "ML element  " << i <<" is "<< avec[i] << endmsg;
+	}
+
+	avec = dbPredU->GetVal(0);  
+
+	for(std::vector<std::pair<unsigned int, unsigned int>>::size_type i = 0; i != modstripU.size(); i++) {
+	  ssmapU[modstripU[i]]=avec[i];
+	  debug() << "ML element  " << i <<" is "<< avec[i] << endmsg;
+	}
+
+	 avec = dbPredV->GetVal(0);  
+
+	for(std::vector<std::pair<unsigned int, unsigned int>>::size_type i = 0; i != modstripV.size(); i++) {
+	  ssmapV[modstripV[i]]=avec[i];
 	  debug() << "ML element  " << i <<" is "<< avec[i] << endmsg;
 	}
 
