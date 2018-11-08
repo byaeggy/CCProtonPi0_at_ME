@@ -1493,8 +1493,9 @@ StatusCode CCProtonPi0::reconstructEvent( Minerva::PhysicsEvent *event, Minerva:
       std::string Cuts;
       // I need to see where run/subrun/etc is defined here
       //if( truth ) Cuts = Form("run==%d && subrun==%d && gate==%d && slice_number==%d", genMinHeader->RunNumber(), genMinHeader->SubRunNumber(),truth->NumEventInFile(), event->sliceNumbers()[0]);
+      if( truthEvent ) Cuts = Form("run==%d && subrun==%d && gate==%d && slice_number==%d", header->RunNumber(), header->SubRunNumber(),truthEvent->NumEventInFile(), event->sliceNumbers()[0]);
       //else Cuts = Form("run==%d && subrun==%d && gate==%d && slice_number==%d", header->runNumber(), header->subRunNumber(),header->gateNumber(), event->sliceNumbers()[0]);
-      Cuts = Form(""); // test hack - Jon
+      //Cuts = Form(""); // test hack - Jon
       debug() << "ML Cuts = " << Cuts << endmsg;
       //Int_t n = dbPred->Draw("predvec",Cuts.c_str(),"");
       Int_t n = dbPredX->Draw("predvec",Cuts.c_str(),"",1,0); // test hack - Jon
